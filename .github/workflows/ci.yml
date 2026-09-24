@@ -22,9 +22,6 @@ defaults:
   run:
     shell: bash -xeuo pipefail {0}
 
-env:
-  FORMULAE: pambrose/tap/prometheus-proxy pambrose/tap/prometheus-agent
-
 jobs:
   test:
     strategy:
@@ -49,18 +46,19 @@ jobs:
         run: brew style pambrose/tap
 
       - name: Audit
-        run: brew audit --strict --online $FORMULAE
+        run: brew audit --strict --online pambrose/tap/prometheus-proxy pambrose/tap/prometheus-agent
 
       - name: Install
-        run: brew install $FORMULAE
+        run: brew install pambrose/tap/prometheus-proxy pambrose/tap/prometheus-agent
 
       - name: Run the formula tests
-        run: brew test $FORMULAE
+        run: brew test pambrose/tap/prometheus-proxy pambrose/tap/prometheus-agent
 
       # The formula tests only check that each command starts. This runs the proxy with the config the formula
       # installs and an agent that serves the proxy's own metrics endpoint, then scrapes that path through the proxy,
       # as Prometheus would.
       - name: Scrape through the proxy and the agent
+        id: scrape
         run: |
           prometheus-proxy --config "$(brew --prefix)/etc/prometheus-proxy.conf" --metrics > proxy.log 2>&1 &
 
@@ -83,5 +81,5 @@ jobs:
           grep '^# HELP proxy_' scrape.txt
 
       - name: Show the proxy and agent logs
-        if: failure()
-        run: tail -n 100 proxy.log agent.log || true
+        if: failure() && steps.scrape.outcome == 'failure'
+        run: tail -n 100 proxy.log agent.log
