@@ -1,0 +1,87 @@
+name: CI
+
+# Installs, tests, and audits both formulae on macOS and Linux for every push and pull request. setup-homebrew checks
+# out the commit under test as the pambrose/tap tap, so `brew` loads these formulae rather than the published ones.
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request supersedes a run still in progress. Runs on master are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+env:
+  FORMULAE: pambrose/tap/prometheus-proxy pambrose/tap/prometheus-agent
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-latest, ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+
+      - name: Cache Homebrew Bundler RubyGems
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ matrix.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ matrix.os }}-rubygems-
+
+      - name: Check style
+        run: brew style pambrose/tap
+
+      - name: Audit
+        run: brew audit --strict --online $FORMULAE
+
+      - name: Install
+        run: brew install $FORMULAE
+
+      - name: Run the formula tests
+        run: brew test $FORMULAE
+
+      # The formula tests only check that each command starts. This runs the proxy with the config the formula
+      # installs and an agent that serves the proxy's own metrics endpoint, then scrapes that path through the proxy,
+      # as Prometheus would.
+      - name: Scrape through the proxy and the agent
+        run: |
+          prometheus-proxy --config "$(brew --prefix)/etc/prometheus-proxy.conf" --metrics > proxy.log 2>&1 &
+
+          cat > agent.conf <<'HOCON'
+          agent {
+            proxy.hostname = localhost
+            pathConfigs = [
+              { name: "Proxy metrics", path: proxy_metrics, url: "http://localhost:8082/metrics" }
+            ]
+          }
+          HOCON
+          prometheus-agent --config agent.conf > agent.log 2>&1 &
+
+          for _ in $(seq 90); do
+            if curl -fsS http://localhost:8080/proxy_metrics > scrape.txt; then
+              break
+            fi
+            sleep 1
+          done
+          grep '^# HELP proxy_' scrape.txt
+
+      - name: Show the proxy and agent logs
+        if: failure()
+        run: tail -n 100 proxy.log agent.log || true

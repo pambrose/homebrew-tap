@@ -46,3 +46,7 @@ Don't edit `Formula/` here. The formulae's sources are in
 and after each release `make homebrew-formulae` there writes them into a clone of this repository with the new
 version and checksums (step 9 of
 [`docs/RELEASE.md`](https://github.com/pambrose/prometheus-proxy/blob/master/docs/RELEASE.md)).
+
+For every push and pull request, [CI](.github/workflows/ci.yml) runs `brew style` and `brew audit` on both
+formulae, installs and tests them on macOS and Linux, and scrapes a metrics endpoint through the installed proxy
+and agent.
