@@ -6,8 +6,8 @@
 class PrometheusAgent < Formula
   desc "Firewall-side agent that relays Prometheus scrapes through prometheus-proxy"
   homepage "https://github.com/pambrose/prometheus-proxy"
-  url "https://github.com/pambrose/prometheus-proxy/releases/download/4.1.0/prometheus-agent.jar"
-  sha256 "00471824f6f6ab74d85602fb91b968861d48c4144e774a2960d1519fedc06dc2"
+  url "https://github.com/pambrose/prometheus-proxy/releases/download/4.2.0/prometheus-agent.jar"
+  sha256 "29b5ed2813acd2bee55bbde0d36ac86023b9dc6047c3a35c86b055c1a136a99a"
   license "Apache-2.0"
 
   livecheck do
