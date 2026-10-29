@@ -6,8 +6,8 @@
 class PrometheusProxy < Formula
   desc "Proxy that lets Prometheus scrape endpoints behind a firewall through agents"
   homepage "https://github.com/pambrose/prometheus-proxy"
-  url "https://github.com/pambrose/prometheus-proxy/releases/download/4.3.0/prometheus-proxy.jar"
-  sha256 "755d96004dcccf7aee3c76ef00677d171a0bb56a52b709eb09ca0d3744f574de"
+  url "https://github.com/pambrose/prometheus-proxy/releases/download/4.4.0/prometheus-proxy.jar"
+  sha256 "a1a8feac330b0a3b3f550c1d123c1af030ada93ba593b850e3bb9c8c214b81e7"
   license "Apache-2.0"
 
   livecheck do
