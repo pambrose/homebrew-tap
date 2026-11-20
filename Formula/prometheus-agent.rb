@@ -6,8 +6,8 @@
 class PrometheusAgent < Formula
   desc "Firewall-side agent that relays Prometheus scrapes through prometheus-proxy"
   homepage "https://github.com/pambrose/prometheus-proxy"
-  url "https://github.com/pambrose/prometheus-proxy/releases/download/4.5.0/prometheus-agent.jar"
-  sha256 "17db0a7cea2295ef35e5c6e88851398b59c9bcfce957ebc3aa33950e0e3ec4e0"
+  url "https://github.com/pambrose/prometheus-proxy/releases/download/4.6.0/prometheus-agent.jar"
+  sha256 "4a3a96afae79c7886dc16f7bc3e5b88a31662ff1d5ddaa98a9daf8601ee7a0c1"
   license "Apache-2.0"
 
   livecheck do
@@ -21,13 +21,14 @@ class PrometheusAgent < Formula
   def install
     libexec.install "prometheus-agent.jar"
 
-    # The JVM flags are the ones etc/docker/agent.Dockerfile passes to silence JDK 25's native-access and
-    # sun.misc.Unsafe startup warnings. Older JDKs reject --sun-misc-unsafe-memory-access, so the script always uses
-    # openjdk@25 rather than honoring a JAVA_HOME set for other work.
+    # The JVM flag is the one etc/docker/agent.Dockerfile passes: sun.misc.Unsafe for netty, which on JDK 24 and later
+    # goes without it otherwise. The jar's manifest gives it native access, without JDK 25's startup warning. Older JDKs
+    # reject --sun-misc-unsafe-memory-access, so the script always uses openjdk@25 rather than honoring a JAVA_HOME set
+    # for other work.
     (bin/"prometheus-agent").write <<~SHELL
       #!/bin/bash
       exec "#{Language::Java.java_home("25")}/bin/java" \\
-        --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow \\
+        --sun-misc-unsafe-memory-access=allow \\
         -jar "#{libexec}/prometheus-agent.jar" "$@"
     SHELL
 
