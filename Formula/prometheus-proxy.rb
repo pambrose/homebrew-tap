@@ -6,8 +6,8 @@
 class PrometheusProxy < Formula
   desc "Proxy that lets Prometheus scrape endpoints behind a firewall through agents"
   homepage "https://github.com/pambrose/prometheus-proxy"
-  url "https://github.com/pambrose/prometheus-proxy/releases/download/4.6.0/prometheus-proxy.jar"
-  sha256 "a9e87e2cd39280ae6382f17c85df6d6f6ca1533e1ac099e7b712137afa2491dc"
+  url "https://github.com/pambrose/prometheus-proxy/releases/download/4.7.0/prometheus-proxy.jar"
+  sha256 "ec0ab091834457c5ce758f3ac8f8e64164b9aadf7367295ca40f251433a9a54d"
   license "Apache-2.0"
 
   livecheck do
@@ -43,7 +43,7 @@ class PrometheusProxy < Formula
         agent.port = 50051
 
         // Until agents must authenticate (agentToken, per-agent auth, or mutual TLS), any peer that can reach
-        // agent.port can register as an agent. See https://pambrose.github.io/prometheus-proxy/security/
+        // agent.port can register as an agent. See https://prometheus-proxy.com/security/
       }
     HOCON
     etc.install "prometheus-proxy.conf"
